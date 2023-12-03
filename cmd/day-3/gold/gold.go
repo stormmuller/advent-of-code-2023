@@ -26,13 +26,14 @@ func main() {
 func getNumbers(lines []string) []int {
 	var numbers []int
 	lastLineIndex := len(lines) - 1
-	gearsSet := utils.NewSet[string]()
+	gearsMap := map[string][]int{}
 
 	for lineIndex, line := range lines {
 
 		var numbersInLine []int
 		var numberBuilder strings.Builder
 		isNumberAdjecentToGear := false
+		var gearsAdjacentToNumber []string
 
 		for charIndex, char := range line {
 			isNumber := unicode.IsDigit(char)
@@ -54,11 +55,9 @@ func getNumbers(lines []string) []int {
 						previousLine = lines[previousLineIndex]
 					}
 
-					gears := getAdjecentGears(line, nextLine, previousLine, charIndex, lineIndex)
+					gearsAdjacentToNumber = append(gearsAdjacentToNumber, getAdjecentGears(line, nextLine, previousLine, charIndex, lineIndex)...)
 
-					gearsSet.AddMulti(gears...)
-
-					isNumberAdjecentToGear = len(gears) > 0
+					isNumberAdjecentToGear = len(gearsAdjacentToNumber) > 0
 				}
 			} else {
 				str := numberBuilder.String()
@@ -80,7 +79,11 @@ func getNumbers(lines []string) []int {
 					log.Fatal(err)
 				}
 
-				// fmt.Printf("The adjecent value for number %v \n", str)
+				fmt.Println(gearsAdjacentToNumber)
+
+				for _, gear := range gearsAdjacentToNumber {
+					gearsMap[gear] = append(gearsMap[gear], number)
+				}
 
 				numbersInLine = append(numbersInLine, number)
 			}
@@ -94,8 +97,13 @@ func getNumbers(lines []string) []int {
 		}
 
 		number, err := strconv.Atoi(str)
+
 		if err != nil {
 			log.Fatal(err)
+		}
+
+		for _, gear := range gearsAdjacentToNumber {
+			gearsMap[gear] = append(gearsMap[gear], number)
 		}
 
 		numbersInLine = append(numbersInLine, number)
@@ -103,7 +111,7 @@ func getNumbers(lines []string) []int {
 		numbers = append(numbers, numbersInLine...)
 	}
 
-	fmt.Println(gearsSet)
+	fmt.Println(gearsMap)
 
 	return numbers
 }
