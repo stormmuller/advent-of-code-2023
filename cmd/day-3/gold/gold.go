@@ -18,8 +18,6 @@ func main() {
 
 	numbers := getNumbers(results)
 
-	fmt.Println(numbers)
-
 	total := utils.SumArray(numbers)
 
 	fmt.Println(total)
@@ -28,12 +26,13 @@ func main() {
 func getNumbers(lines []string) []int {
 	var numbers []int
 	lastLineIndex := len(lines) - 1
+	gearsSet := utils.NewSet[string]()
 
 	for lineIndex, line := range lines {
 
 		var numbersInLine []int
 		var numberBuilder strings.Builder
-		isNumberAdjecentToSymbol := false
+		isNumberAdjecentToGear := false
 
 		for charIndex, char := range line {
 			isNumber := unicode.IsDigit(char)
@@ -41,7 +40,7 @@ func getNumbers(lines []string) []int {
 			if isNumber {
 				numberBuilder.WriteRune(char)
 
-				if !isNumberAdjecentToSymbol {
+				if !isNumberAdjecentToGear {
 					nextLineIndex := lineIndex + 1
 					previousLineIndex := lineIndex - 1
 					var nextLine string
@@ -55,8 +54,11 @@ func getNumbers(lines []string) []int {
 						previousLine = lines[previousLineIndex]
 					}
 
-					isNumberAdjecentToSymbol = hasAdjecentSymbols(line, nextLine, previousLine, charIndex)
+					gears := getAdjecentGears(line, nextLine, previousLine, charIndex, lineIndex)
 
+					gearsSet.AddMulti(gears...)
+
+					isNumberAdjecentToGear = len(gears) > 0
 				}
 			} else {
 				str := numberBuilder.String()
@@ -67,12 +69,11 @@ func getNumbers(lines []string) []int {
 
 				numberBuilder.Reset()
 
-				if !isNumberAdjecentToSymbol {
-					fmt.Printf("skipping...[%v, %v] %v \n", lineIndex, charIndex, str)
+				if !isNumberAdjecentToGear {
 					continue
 				}
 
-				isNumberAdjecentToSymbol = false
+				isNumberAdjecentToGear = false
 				number, err := strconv.Atoi(str)
 
 				if err != nil {
@@ -87,9 +88,7 @@ func getNumbers(lines []string) []int {
 
 		str := numberBuilder.String()
 
-		if str == "" || !isNumberAdjecentToSymbol {
-			fmt.Printf("skipping...[%v, ~] %v \n", lineIndex, str)
-
+		if str == "" || !isNumberAdjecentToGear {
 			numbers = append(numbers, numbersInLine...)
 			continue
 		}
@@ -104,52 +103,61 @@ func getNumbers(lines []string) []int {
 		numbers = append(numbers, numbersInLine...)
 	}
 
+	fmt.Println(gearsSet)
+
 	return numbers
 }
 
-func hasAdjecentSymbols(currentLine string, nextLine string, previousLine string, charIndex int) bool {
+func getAdjecentGears(currentLine string, nextLine string, previousLine string, charIndex int, lineIndex int) []string {
 
 	canCheckLeft := charIndex >= 1
 	canCheckRight := charIndex <= len(currentLine)-2 // minus 2 because we will be adding 1
 	canCheckDown := nextLine != ""
 	canCheckUp := previousLine != ""
 
+	var gears []string
+
 	if canCheckLeft {
 		previousChar := []rune(currentLine)[charIndex-1]
 
-		if isSpecialCharacter(previousChar) {
-			return true
+		if isGear(previousChar) {
+			gear := strings.Join([]string{strconv.Itoa(lineIndex), strconv.Itoa(charIndex - 1)}, "")
+			gears = append(gears, gear)
 		}
 	}
 
 	if canCheckRight {
 		nextChar := []rune(currentLine)[charIndex+1]
 
-		if isSpecialCharacter(nextChar) {
-			return true
+		if isGear(nextChar) {
+			gear := strings.Join([]string{strconv.Itoa(lineIndex), strconv.Itoa(charIndex + 1)}, "")
+			gears = append(gears, gear)
 		}
 	}
 
 	if canCheckDown {
 		charBelow := []rune(nextLine)[charIndex]
 
-		if isSpecialCharacter(charBelow) {
-			return true
+		if isGear(charBelow) {
+			gear := strings.Join([]string{strconv.Itoa(lineIndex + 1), strconv.Itoa(charIndex)}, "")
+			gears = append(gears, gear)
 		}
 
 		if canCheckLeft {
 			previousBelowChar := []rune(nextLine)[charIndex-1]
 
-			if isSpecialCharacter(previousBelowChar) {
-				return true
+			if isGear(previousBelowChar) {
+				gear := strings.Join([]string{strconv.Itoa(lineIndex + 1), strconv.Itoa(charIndex - 1)}, "")
+				gears = append(gears, gear)
 			}
 		}
 
 		if canCheckRight {
 			nextBelowChar := []rune(nextLine)[charIndex+1]
 
-			if isSpecialCharacter(nextBelowChar) {
-				return true
+			if isGear(nextBelowChar) {
+				gear := strings.Join([]string{strconv.Itoa(lineIndex + 1), strconv.Itoa(charIndex + 1)}, "")
+				gears = append(gears, gear)
 			}
 		}
 	}
@@ -157,35 +165,37 @@ func hasAdjecentSymbols(currentLine string, nextLine string, previousLine string
 	if canCheckUp {
 		charAbove := []rune(previousLine)[charIndex]
 
-		if isSpecialCharacter(charAbove) {
-			return true
+		if isGear(charAbove) {
+			gear := strings.Join([]string{strconv.Itoa(lineIndex - 1), strconv.Itoa(charIndex)}, "")
+			gears = append(gears, gear)
 		}
 
 		if canCheckLeft {
 			previousAboveChar := []rune(previousLine)[charIndex-1]
 
-			if isSpecialCharacter(previousAboveChar) {
-				return true
+			if isGear(previousAboveChar) {
+				gear := strings.Join([]string{strconv.Itoa(lineIndex - 1), strconv.Itoa(charIndex - 1)}, "")
+				gears = append(gears, gear)
 			}
 		}
 
 		if canCheckRight {
 			nextAboveChar := []rune(previousLine)[charIndex+1]
 
-			if isSpecialCharacter(nextAboveChar) {
-				return true
+			if isGear(nextAboveChar) {
+				gear := strings.Join([]string{strconv.Itoa(lineIndex - 1), strconv.Itoa(charIndex + 1)}, "")
+				gears = append(gears, gear)
 			}
 		}
 	}
 
-	return false
+	return gears
 }
 
-func isSpecialCharacter(r rune) bool {
-	switch r {
-	case '-', '*', '@', '=', '%', '/', '+', '&', '^', '#', '$':
+func isGear(r rune) bool {
+	if r == '*' {
 		return true
-	default:
-		return false
 	}
+
+	return false
 }
