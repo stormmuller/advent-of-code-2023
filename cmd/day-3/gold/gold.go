@@ -25,179 +25,155 @@ func main() {
 
 func getNumbers(lines []string) []int {
 	var numbers []int
-	lastLineIndex := len(lines) - 1
-	gearsMap := map[string][]int{}
 
 	for lineIndex, line := range lines {
-
-		var numbersInLine []int
-		var numberBuilder strings.Builder
-		isNumberAdjecentToGear := false
-		var gearsAdjacentToNumber []string
-
 		for charIndex, char := range line {
-			isNumber := unicode.IsDigit(char)
+			if isGear(char) {
+				adjacentNumbers := getAdjecentNumbers(lines, lineIndex, charIndex)
 
-			if isNumber {
-				numberBuilder.WriteRune(char)
+				if len(adjacentNumbers) == 2 {
+					total := 1
 
-				if !isNumberAdjecentToGear {
-					nextLineIndex := lineIndex + 1
-					previousLineIndex := lineIndex - 1
-					var nextLine string
-					var previousLine string
-
-					if nextLineIndex <= lastLineIndex {
-						nextLine = lines[nextLineIndex]
+					for _, num := range adjacentNumbers {
+						total *= num
 					}
 
-					if previousLineIndex >= 0 {
-						previousLine = lines[previousLineIndex]
-					}
-
-					gearsAdjacentToNumber = append(gearsAdjacentToNumber, getAdjecentGears(line, nextLine, previousLine, charIndex, lineIndex)...)
-
-					isNumberAdjecentToGear = len(gearsAdjacentToNumber) > 0
+					numbers = append(numbers, total)
 				}
-			} else {
-				str := numberBuilder.String()
-
-				if str == "" {
-					continue
-				}
-
-				numberBuilder.Reset()
-
-				if !isNumberAdjecentToGear {
-					continue
-				}
-
-				isNumberAdjecentToGear = false
-				number, err := strconv.Atoi(str)
-
-				if err != nil {
-					log.Fatal(err)
-				}
-
-				fmt.Println(gearsAdjacentToNumber)
-
-				for _, gear := range gearsAdjacentToNumber {
-					gearsMap[gear] = append(gearsMap[gear], number)
-				}
-
-				numbersInLine = append(numbersInLine, number)
 			}
 		}
-
-		str := numberBuilder.String()
-
-		if str == "" || !isNumberAdjecentToGear {
-			numbers = append(numbers, numbersInLine...)
-			continue
-		}
-
-		number, err := strconv.Atoi(str)
-
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		for _, gear := range gearsAdjacentToNumber {
-			gearsMap[gear] = append(gearsMap[gear], number)
-		}
-
-		numbersInLine = append(numbersInLine, number)
-
-		numbers = append(numbers, numbersInLine...)
 	}
-
-	fmt.Println(gearsMap)
 
 	return numbers
 }
 
-func getAdjecentGears(currentLine string, nextLine string, previousLine string, charIndex int, lineIndex int) []string {
+func getAdjecentNumbers(lines []string, lineIndex int, charIndex int) map[coordinate]int {
+	canCheckUp := lineIndex > 0
+	canCheckRight := charIndex <= len(lines[lineIndex])-2 // minus 2 because we will be adding 1
+	canCheckDown := lineIndex < len(lines)-1
+	canCheckLeft := charIndex > 0
 
-	canCheckLeft := charIndex >= 1
-	canCheckRight := charIndex <= len(currentLine)-2 // minus 2 because we will be adding 1
-	canCheckDown := nextLine != ""
-	canCheckUp := previousLine != ""
+	var nChar, neChar, eChar, seChar, sChar, swChar, wChar, nwChar rune
 
-	var gears []string
+	if canCheckUp {
+		nChar = []rune(lines[lineIndex-1])[charIndex]
+	}
 
-	if canCheckLeft {
-		previousChar := []rune(currentLine)[charIndex-1]
-
-		if isGear(previousChar) {
-			gear := strings.Join([]string{strconv.Itoa(lineIndex), strconv.Itoa(charIndex - 1)}, "")
-			gears = append(gears, gear)
-		}
+	if canCheckUp && canCheckRight {
+		neChar = []rune(lines[lineIndex-1])[charIndex+1]
 	}
 
 	if canCheckRight {
-		nextChar := []rune(currentLine)[charIndex+1]
+		eChar = []rune(lines[lineIndex])[charIndex+1]
+	}
 
-		if isGear(nextChar) {
-			gear := strings.Join([]string{strconv.Itoa(lineIndex), strconv.Itoa(charIndex + 1)}, "")
-			gears = append(gears, gear)
-		}
+	if canCheckDown && canCheckRight {
+		seChar = []rune(lines[lineIndex+1])[charIndex+1]
 	}
 
 	if canCheckDown {
-		charBelow := []rune(nextLine)[charIndex]
-
-		if isGear(charBelow) {
-			gear := strings.Join([]string{strconv.Itoa(lineIndex + 1), strconv.Itoa(charIndex)}, "")
-			gears = append(gears, gear)
-		}
-
-		if canCheckLeft {
-			previousBelowChar := []rune(nextLine)[charIndex-1]
-
-			if isGear(previousBelowChar) {
-				gear := strings.Join([]string{strconv.Itoa(lineIndex + 1), strconv.Itoa(charIndex - 1)}, "")
-				gears = append(gears, gear)
-			}
-		}
-
-		if canCheckRight {
-			nextBelowChar := []rune(nextLine)[charIndex+1]
-
-			if isGear(nextBelowChar) {
-				gear := strings.Join([]string{strconv.Itoa(lineIndex + 1), strconv.Itoa(charIndex + 1)}, "")
-				gears = append(gears, gear)
-			}
-		}
+		sChar = []rune(lines[lineIndex+1])[charIndex]
 	}
 
-	if canCheckUp {
-		charAbove := []rune(previousLine)[charIndex]
-
-		if isGear(charAbove) {
-			gear := strings.Join([]string{strconv.Itoa(lineIndex - 1), strconv.Itoa(charIndex)}, "")
-			gears = append(gears, gear)
-		}
-
-		if canCheckLeft {
-			previousAboveChar := []rune(previousLine)[charIndex-1]
-
-			if isGear(previousAboveChar) {
-				gear := strings.Join([]string{strconv.Itoa(lineIndex - 1), strconv.Itoa(charIndex - 1)}, "")
-				gears = append(gears, gear)
-			}
-		}
-
-		if canCheckRight {
-			nextAboveChar := []rune(previousLine)[charIndex+1]
-
-			if isGear(nextAboveChar) {
-				gear := strings.Join([]string{strconv.Itoa(lineIndex - 1), strconv.Itoa(charIndex + 1)}, "")
-				gears = append(gears, gear)
-			}
-		}
+	if canCheckDown && canCheckLeft {
+		swChar = []rune(lines[lineIndex+1])[charIndex-1]
 	}
 
-	return gears
+	if canCheckLeft {
+		wChar = []rune(lines[lineIndex])[charIndex-1]
+	}
+
+	if canCheckUp && canCheckLeft {
+		nwChar = []rune(lines[lineIndex-1])[charIndex-1]
+	}
+
+	// var numbers []int
+	numbers := map[coordinate]int{}
+
+	// nChar, neChar, eChar, seChar, sChar, swChar, wChar, nwChar
+
+	if unicode.IsDigit(nChar) {
+		coord, number := battleShipNumber(lines, lineIndex-1, charIndex)
+		numbers[coord] = number
+	}
+
+	if unicode.IsDigit(neChar) {
+		coord, number := battleShipNumber(lines, lineIndex-1, charIndex+1)
+		numbers[coord] = number
+	}
+
+	if unicode.IsDigit(eChar) {
+		coord, number := battleShipNumber(lines, lineIndex, charIndex+1)
+		numbers[coord] = number
+	}
+
+	if unicode.IsDigit(seChar) {
+		coord, number := battleShipNumber(lines, lineIndex+1, charIndex+1)
+		numbers[coord] = number
+	}
+
+	if unicode.IsDigit(sChar) {
+		coord, number := battleShipNumber(lines, lineIndex+1, charIndex)
+		numbers[coord] = number
+	}
+
+	if unicode.IsDigit(swChar) {
+		coord, number := battleShipNumber(lines, lineIndex+1, charIndex-1)
+		numbers[coord] = number
+	}
+
+	if unicode.IsDigit(wChar) {
+		coord, number := battleShipNumber(lines, lineIndex, charIndex-1)
+		numbers[coord] = number
+	}
+
+	if unicode.IsDigit(nwChar) {
+		coord, number := battleShipNumber(lines, lineIndex-1, charIndex-1)
+		numbers[coord] = number
+	}
+
+	return numbers
+}
+
+func battleShipNumber(lines []string, lineIndex int, startIndex int) (coordinate, int) {
+	line := lines[lineIndex]
+
+	start := calculateNumberStart(line, startIndex)
+
+	var sb strings.Builder
+
+	var currentIndex int = start
+
+	for currentIndex < len(line) {
+		char := rune(line[currentIndex])
+
+		if !unicode.IsDigit(char) {
+			break
+		}
+
+		sb.WriteRune(char)
+		currentIndex++
+	}
+
+	result, err := strconv.Atoi(sb.String())
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	return coordinate{lineIndex, start}, result
+}
+
+func calculateNumberStart(line string, index int) int {
+	if index == 0 {
+		return index
+	}
+
+	if unicode.IsDigit(rune(line[index-1])) {
+		return calculateNumberStart(line, index-1)
+	}
+
+	return index
 }
 
 func isGear(r rune) bool {
@@ -206,4 +182,9 @@ func isGear(r rune) bool {
 	}
 
 	return false
+}
+
+type coordinate struct {
+	line  int
+	index int
 }
