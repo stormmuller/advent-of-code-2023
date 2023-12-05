@@ -10,8 +10,8 @@
         "request": "launch",
         "mode": "debug",
         "cwd": "${workspaceRoot}",
-        "program": "cmd/day-4/silver/silver.go",
-        "args": ["cmd/day-4/silver/example.txt"]
+        "program": "cmd/day-4/gold/gold.go",
+        "args": ["cmd/day-4/gold/example.txt"]
     }
     ]
 }

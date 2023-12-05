@@ -8,20 +8,40 @@ import (
 	"github.com/stormmuller/advent-of-code-2023/utils"
 )
 
+var cardCount = map[int]int{}
+
 func main() {
 	args := os.Args[1:] // os.Args[0] is the program path, so skip it
 
-	results := utils.ProcessFile(args[0], processCard)
+	results := utils.ReadFile(args[0])
 
-	fmt.Println(results)
+	cardCount = utils.MakeFilledMap(len(results), 0)
 
-	total := utils.SumArray(results)
+	for cardNumber := range cardCount {
+		processCards(results, cardNumber)
+
+		fmt.Printf("processed %v\n", cardNumber)
+	}
+
+	total := utils.SumMapValues(cardCount)
 
 	fmt.Println(total)
 }
 
-func processCard(line string) int {
-	results := strings.Split(line, "|")
+func processCards(cards []string, cardNumber int) {
+	index := cardNumber - 1
+
+	cardCount[cardNumber]++
+
+	numberOfMatches := getNumberOfMatches(cards[index])
+
+	for i := cardNumber + 1; i < cardNumber+numberOfMatches+1; i++ {
+		processCards(cards, i)
+	}
+}
+
+func getNumberOfMatches(card string) int {
+	results := strings.Split(card, "|")
 
 	played := results[0]
 	winning := results[1]
@@ -40,17 +60,5 @@ func processCard(line string) int {
 		}
 	}
 
-	return doubleXTimes(numberOfMatches)
-}
-
-func doubleXTimes(x int) int {
-	if x == 0 {
-		return 0
-	}
-
-	result := 1
-	for i := 0; i < x-1; i++ {
-		result *= 2
-	}
-	return result
+	return numberOfMatches
 }

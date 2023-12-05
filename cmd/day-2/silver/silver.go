@@ -13,7 +13,7 @@ import (
 func main() {
 	args := os.Args[1:] // os.Args[0] is the program path, so skip it
 
-	results := utils.ReadFile(args[0], processLine)
+	results := utils.ProcessFile(args[0], processLine)
 
 	total := utils.SumArray(results)
 
