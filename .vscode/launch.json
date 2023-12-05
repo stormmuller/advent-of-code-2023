@@ -1,7 +1,7 @@
 {
     // Use IntelliSense to learn about possible attributes.
     // Hover to view descriptions of existing attributes.
-    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=840487
     "version": "0.2.0",
     "configurations": [
     {
@@ -10,8 +10,8 @@
         "request": "launch",
         "mode": "debug",
         "cwd": "${workspaceRoot}",
-        "program": "cmd/day-3/gold/gold.go",
-        "args": ["cmd/day-3/gold/example.txt"]
+        "program": "cmd/day-4/silver/silver.go",
+        "args": ["cmd/day-4/silver/example.txt"]
     }
     ]
 }
